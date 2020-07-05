@@ -107,7 +107,7 @@ class Feed extends Component {
     });
     // Set up data (with image!)
     let url = 'http://127.0.0.1:8080/feed/posts';
-    let method = "POST"
+    let method = 'POST';
     if (this.state.editPost) {
       url = 'URL';
     }
@@ -121,6 +121,7 @@ class Feed extends Component {
         title:postData.title,
         content:postData.content
       })    
+
     })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
