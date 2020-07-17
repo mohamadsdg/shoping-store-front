@@ -9,6 +9,8 @@ import Loader from '../../components/Loader/Loader';
 import ErrorHandler from '../../components/ErrorHandler/ErrorHandler';
 import './Feed.css';
 
+import openSocket from 'socket.io-client';
+
 class Feed extends Component {
   state = {
     isEditing: false,
@@ -39,6 +41,19 @@ class Feed extends Component {
       .catch(this.catchError);
 
     this.loadPosts();
+
+    const socket = openSocket('http://127.0.0.1:8080')
+    socket.on('post',data=>{
+      switch (data.action) {
+        case 'create':
+          this.addPost(data.post)
+          break;
+      
+        default:
+          new Error('unhandle action' + data.action)
+          break;
+      }
+    })
   }
 
   loadPosts = direction => {
@@ -78,6 +93,22 @@ class Feed extends Component {
         });
       })
       .catch(this.catchError);
+  };
+
+  addPost = post => {
+    this.setState(prevState => {
+      const updatedPosts = [...prevState.posts];
+      if (prevState.postPage === 1) {
+        if (prevState.posts.length >= 2) {
+          updatedPosts.pop();
+        }
+        updatedPosts.unshift(post);
+      }
+      return {
+        posts: updatedPosts,
+        totalPosts: prevState.totalPosts + 1
+      };
+    });
   };
 
   statusUpdateHandler = event => {
