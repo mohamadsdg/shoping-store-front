@@ -24,7 +24,7 @@ class Feed extends Component {
   };
 
   componentDidMount() {
-    fetch('http://127.0.0.1:8080/auth/status',{
+    fetch('https://api-minishop.herokuapp.com/auth/status',{
       headers: {
         Authorization: 'Bearer ' + this.props.token
       }
@@ -42,7 +42,7 @@ class Feed extends Component {
 
     this.loadPosts();
 
-    const socket = openSocket('http://127.0.0.1:8080')
+    const socket = openSocket('https://api-minishop.herokuapp.com')
     socket.on('post', data=>{
       switch (data.action) {
         case 'create':
@@ -77,7 +77,7 @@ class Feed extends Component {
       page--;
       this.setState({ postPage: page });
     }
-    fetch('http://127.0.0.1:8080/feed/posts?page=' + page,{
+    fetch('https://api-minishop.herokuapp.com/feed/posts?page=' + page,{
      headers:{
       Authorization: 'Bearer ' + this.props.token
      }
@@ -134,7 +134,7 @@ class Feed extends Component {
 
   statusUpdateHandler = event => {
     event.preventDefault();
-    fetch('http://127.0.0.1:8080/auth/status',{
+    fetch('https://api-minishop.herokuapp.com/auth/status',{
       method:'PATCH',
       headers: {
         Authorization: 'Bearer ' + this.props.token,
@@ -185,10 +185,10 @@ class Feed extends Component {
     formData.append('content',postData.content)
     formData.append('image',postData.image)
     
-    let url = 'http://127.0.0.1:8080/feed/posts';
+    let url = 'https://api-minishop.herokuapp.com/feed/posts';
     let method = 'POST';
     if (this.state.editPost) {
-      url = `http://127.0.0.1:8080/feed/post/${this.state.editPost._id}`;
+      url = `https://api-minishop.herokuapp.com/feed/post/${this.state.editPost._id}`;
       method = 'PUT';
 
     }
@@ -240,7 +240,7 @@ class Feed extends Component {
 
   deletePostHandler = postId => {
     this.setState({ postsLoading: true });
-    fetch(`http://127.0.0.1:8080/feed/post/${postId}`,{
+    fetch(`https://api-minishop.herokuapp.com/feed/post/${postId}`,{
       method: 'DELETE',
       headers:{
         Authorization: 'Bearer ' + this.props.token
