@@ -1,15 +1,15 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component, Fragment } from "react";
 
-import Post from '../../components/Feed/Post/Post';
-import Button from '../../components/Button/Button';
-import FeedEdit from '../../components/Feed/FeedEdit/FeedEdit';
-import Input from '../../components/Form/Input/Input';
-import Paginator from '../../components/Paginator/Paginator';
-import Loader from '../../components/Loader/Loader';
-import ErrorHandler from '../../components/ErrorHandler/ErrorHandler';
-import './Feed.css';
+import Post from "../../components/Feed/Post/Post";
+import Button from "../../components/Button/Button";
+import FeedEdit from "../../components/Feed/FeedEdit/FeedEdit";
+import Input from "../../components/Form/Input/Input";
+import Paginator from "../../components/Paginator/Paginator";
+import Loader from "../../components/Loader/Loader";
+import ErrorHandler from "../../components/ErrorHandler/ErrorHandler";
+import "./Feed.css";
 
-import openSocket from 'socket.io-client';
+import openSocket from "socket.io-client";
 
 class Feed extends Component {
   state = {
@@ -17,94 +17,105 @@ class Feed extends Component {
     posts: [],
     totalPosts: 0,
     editPost: null,
-    status: '',
+    status: "",
     postPage: 1,
     postsLoading: true,
-    editLoading: false
+    editLoading: false,
   };
 
   componentDidMount() {
-    fetch('https://api-minishop.herokuapp.com/auth/status',{
+    fetch("http://127.0.0.1:8080/auth/status", {
       headers: {
-        Authorization: 'Bearer ' + this.props.token
-      }
+        Authorization: "Bearer " + this.props.token,
+      },
     })
-      .then(res => {
+      .then((res) => {
         if (res.status !== 200) {
-          throw new Error('Failed to fetch user status.');
+          throw new Error("Failed to fetch user status.");
         }
         return res.json();
       })
-      .then(resData => {
+      .then((resData) => {
         this.setState({ status: resData.status });
       })
       .catch(this.catchError);
 
     this.loadPosts();
 
-    const socket = openSocket('https://api-minishop.herokuapp.com')
-    socket.on('post', data=>{
+    const socket = openSocket("http://127.0.0.1:8080");
+    socket.on("post", (data) => {
       switch (data.action) {
-        case 'create':
-          this.addPost(data.post)
+        case "create":
+          this.addPost(data.post);
           break;
 
-        case 'update':
-          this.updatePost(data.post)
+        case "update":
+          this.updatePost(data.post);
           break;
-          
-        case 'delete':
-          this.loadPosts()
+
+        case "delete":
+          this.loadPosts();
           break;
-      
+
         default:
-          new Error('unhandle action' + data.action)
+          new Error("unhandle action" + data.action);
           break;
       }
-    })
+    });
+    socket.on("user", (data) => {
+      switch (data.action) {
+        case "update:status":
+          this.statusInputChangeHandler("", data.status);
+          break;
+
+        default:
+          new Error("unhandle action" + data.action);
+          break;
+      }
+    });
   }
 
-  loadPosts = direction => {
+  loadPosts = (direction) => {
     if (direction) {
       this.setState({ postsLoading: true, posts: [] });
     }
     let page = this.state.postPage;
-    if (direction === 'next') {
+    if (direction === "next") {
       page++;
       this.setState({ postPage: page });
     }
-    if (direction === 'previous') {
+    if (direction === "previous") {
       page--;
       this.setState({ postPage: page });
     }
-    fetch('https://api-minishop.herokuapp.com/feed/posts?page=' + page,{
-     headers:{
-      Authorization: 'Bearer ' + this.props.token
-     }
+    fetch("http://127.0.0.1:8080/feed/posts?page=" + page, {
+      headers: {
+        Authorization: "Bearer " + this.props.token,
+      },
     })
-      .then(res => {
+      .then((res) => {
         if (res.status !== 200) {
-          throw new Error('Failed to fetch posts.');
+          throw new Error("Failed to fetch posts.");
         }
         return res.json();
       })
-      .then(resData => {
+      .then((resData) => {
         this.setState({
-          posts: resData.posts.map((post)=>{
+          posts: resData.posts.map((post) => {
             return {
               ...post,
-              imagePath: post.imageUrl
-            }
+              imagePath: post.imageUrl,
+            };
           }),
           totalPosts: resData.totalItems,
-          postsLoading: false
+          postsLoading: false,
         });
       })
       .catch(this.catchError);
   };
 
-  addPost = post => {
-    this.setState(prevState => {
+  addPost = (post) => {
+    this.setState((prevState) => {
       const updatedPosts = [...prevState.posts];
       if (prevState.postPage === 1) {
         if (prevState.posts.length >= 2) {
@@ -114,43 +125,45 @@ class Feed extends Component {
       }
       return {
         posts: updatedPosts,
-        totalPosts: prevState.totalPosts + 1
+        totalPosts: prevState.totalPosts + 1,
       };
     });
   };
 
-  updatePost = post => {
-    this.setState(prevState => {
+  updatePost = (post) => {
+    this.setState((prevState) => {
       const updatedPosts = [...prevState.posts];
-      const updatedPostIndex = updatedPosts.findIndex(p => p._id === post._id);
+      const updatedPostIndex = updatedPosts.findIndex(
+        (p) => p._id === post._id
+      );
       if (updatedPostIndex > -1) {
         updatedPosts[updatedPostIndex] = post;
       }
       return {
-        posts: updatedPosts
+        posts: updatedPosts,
       };
     });
   };
 
-  statusUpdateHandler = event => {
+  statusUpdateHandler = (event) => {
     event.preventDefault();
-    fetch('https://api-minishop.herokuapp.com/auth/status',{
-      method:'PATCH',
+    fetch("http://127.0.0.1:8080/auth/status", {
+      method: "PATCH",
       headers: {
-        Authorization: 'Bearer ' + this.props.token,
-        'Content-Type': 'application/json'
+        Authorization: "Bearer " + this.props.token,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        status: this.state.status
-      })
+        status: this.state.status,
+      }),
     })
-      .then(res => {
+      .then((res) => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error("Can't update status!");
         }
         return res.json();
       })
-      .then(resData => {
+      .then((resData) => {
         console.log(resData);
       })
       .catch(this.catchError);
@@ -160,13 +173,13 @@ class Feed extends Component {
     this.setState({ isEditing: true });
   };
 
-  startEditPostHandler = postId => {
-    this.setState(prevState => {
-      const loadedPost = { ...prevState.posts.find(p => p._id === postId) };
+  startEditPostHandler = (postId) => {
+    this.setState((prevState) => {
+      const loadedPost = { ...prevState.posts.find((p) => p._id === postId) };
 
       return {
         isEditing: true,
-        editPost: loadedPost
+        editPost: loadedPost,
       };
     });
   };
@@ -175,61 +188,59 @@ class Feed extends Component {
     this.setState({ isEditing: false, editPost: null });
   };
 
-  finishEditHandler = postData => {
+  finishEditHandler = (postData) => {
     // console.log('finishEditHandler',postData)
     this.setState({
-      editLoading: true
+      editLoading: true,
     });
     const formData = new FormData();
-    formData.append('title',postData.title)
-    formData.append('content',postData.content)
-    formData.append('image',postData.image)
-    
-    let url = 'https://api-minishop.herokuapp.com/feed/posts';
-    let method = 'POST';
-    if (this.state.editPost) {
-      url = `https://api-minishop.herokuapp.com/feed/post/${this.state.editPost._id}`;
-      method = 'PUT';
+    formData.append("title", postData.title);
+    formData.append("content", postData.content);
+    formData.append("image", postData.image);
 
+    let url = "http://127.0.0.1:8080/feed/posts";
+    let method = "POST";
+    if (this.state.editPost) {
+      url = `http://127.0.0.1:8080/feed/post/${this.state.editPost._id}`;
+      method = "PUT";
     }
 
-    fetch(url,{
-      headers:{
-        Authorization: 'Bearer ' + this.props.token
-       },
-      method:method,
-      body: formData 
-
+    fetch(url, {
+      headers: {
+        Authorization: "Bearer " + this.props.token,
+      },
+      method: method,
+      body: formData,
     })
-      .then(res => {
+      .then((res) => {
         if (res.status !== 200 && res.status !== 201) {
-          throw new Error('Creating or editing a post failed!');
+          throw new Error("Creating or editing a post failed!");
         }
         return res.json();
       })
-      .then(resData => {
+      .then((resData) => {
         const post = {
           _id: resData.post._id,
           title: resData.post.title,
           content: resData.post.content,
           creator: resData.post.creator,
-          createdAt: resData.post.createdAt
+          createdAt: resData.post.createdAt,
         };
-        this.setState(prevState => {
+        this.setState((prevState) => {
           return {
             isEditing: false,
             editPost: null,
-            editLoading: false
+            editLoading: false,
           };
         });
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
         this.setState({
           isEditing: false,
           editPost: null,
           editLoading: false,
-          error: err
+          error: err,
         });
       });
   };
@@ -238,28 +249,28 @@ class Feed extends Component {
     this.setState({ status: value });
   };
 
-  deletePostHandler = postId => {
+  deletePostHandler = (postId) => {
     this.setState({ postsLoading: true });
-    fetch(`https://api-minishop.herokuapp.com/feed/post/${postId}`,{
-      method: 'DELETE',
-      headers:{
-        Authorization: 'Bearer ' + this.props.token
-       }
+    fetch(`http://127.0.0.1:8080/feed/post/${postId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: "Bearer " + this.props.token,
+      },
     })
-      .then(res => {
+      .then((res) => {
         if (res.status !== 200 && res.status !== 201) {
-          throw new Error('Deleting a post failed!');
+          throw new Error("Deleting a post failed!");
         }
         return res.json();
       })
-      .then(resData => {
+      .then((resData) => {
         console.log(resData);
-        this.setState(prevState => {
-          const updatedPosts = prevState.posts.filter(p => p._id !== postId);
+        this.setState((prevState) => {
+          const updatedPosts = prevState.posts.filter((p) => p._id !== postId);
           return { posts: updatedPosts, postsLoading: false };
         });
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
         this.setState({ postsLoading: false });
       });
@@ -269,7 +280,7 @@ class Feed extends Component {
     this.setState({ error: null });
   };
 
-  catchError = error => {
+  catchError = (error) => {
     this.setState({ error: error });
   };
 
@@ -305,26 +316,26 @@ class Feed extends Component {
         </section>
         <section className="feed">
           {this.state.postsLoading && (
-            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <div style={{ textAlign: "center", marginTop: "2rem" }}>
               <Loader />
             </div>
           )}
           {this.state.posts.length <= 0 && !this.state.postsLoading ? (
-            <p style={{ textAlign: 'center' }}>No posts found.</p>
+            <p style={{ textAlign: "center" }}>No posts found.</p>
           ) : null}
           {!this.state.postsLoading && (
             <Paginator
-              onPrevious={this.loadPosts.bind(this, 'previous')}
-              onNext={this.loadPosts.bind(this, 'next')}
+              onPrevious={this.loadPosts.bind(this, "previous")}
+              onNext={this.loadPosts.bind(this, "next")}
               lastPage={Math.ceil(this.state.totalPosts / 2)}
               currentPage={this.state.postPage}
             >
-              {this.state.posts.map(post => (
+              {this.state.posts.map((post) => (
                 <Post
                   key={post._id}
                   id={post._id}
                   author={post.creator.name}
-                  date={new Date(post.createdAt).toLocaleDateString('en-US')}
+                  date={new Date(post.createdAt).toLocaleDateString("en-US")}
                   title={post.title}
                   image={post.imageUrl}
                   content={post.content}

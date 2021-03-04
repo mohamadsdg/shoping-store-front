@@ -14,10 +14,10 @@ class SinglePost extends Component {
 
   componentDidMount() {
     const postId = this.props.match.params.postId;
-    fetch(`https://api-minishop.herokuapp.com/feed/post/${postId}`,{
-      headers:{
-        Authorization: 'Bearer ' + this.props.token
-       }
+    fetch(`http://127.0.0.1:8080/feed/post/${postId}`, {
+      headers: {
+        Authorization: "Bearer " + this.props.token,
+      },
     })
       .then((res) => {
         if (res.status !== 200) {
@@ -31,7 +31,7 @@ class SinglePost extends Component {
           author: resData.post.creator.name,
           date: new Date(resData.post.createdAt).toLocaleDateString("en-US"),
           content: resData.post.content,
-          image: `https://api-minishop.herokuapp.com/${resData.post.imageUrl}`,
+          image: `http://127.0.0.1:8080/${resData.post.imageUrl}`,
         });
       })
       .catch((err) => {
